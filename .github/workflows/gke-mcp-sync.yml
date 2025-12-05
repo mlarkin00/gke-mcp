@@ -1,4 +1,6 @@
 name: 'gke-mcp sync'
+permissions:
+  contents: read
 
 on:
   schedule:
@@ -10,6 +12,8 @@ jobs:
   sync_latest_from_upstream:
     runs-on: ubuntu-latest
     name: Sync latest commits from upstream repo
+    permissions:
+      contents: write
 
     steps:
     # REQUIRED step
