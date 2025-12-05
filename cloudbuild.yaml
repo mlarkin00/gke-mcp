@@ -1,17 +1,25 @@
 steps:
   - id: "Get latest image"
-    name: 'gcr.io/cloud-builders/docker'
-    entrypoint: 'bash'
-    args: ['-c', 'docker pull ${_REPO}/${_IMAGE}:latest || exit 0']
+    name: "gcr.io/cloud-builders/docker"
+    entrypoint: "bash"
+    args: ["-c", "docker pull ${_REPO}/${_IMAGE}:latest || exit 0"]
 
   - id: "Build image"
     waitFor: ["Get latest image"]
     name: "gcr.io/cloud-builders/docker"
-    args: ["build", "-t", "${_REPO}/${_IMAGE}:${_VERSION}","--cache-from", "${_REPO}/${_IMAGE}:latest", "${_SRC}"]
+    args:
+      [
+        "build",
+        "-t",
+        "${_REPO}/${_IMAGE}:${_VERSION}",
+        "--cache-from",
+        "${_REPO}/${_IMAGE}:latest",
+        "${_SRC}",
+      ]
 
   - id: "Tag as latest"
-    name: 'gcr.io/cloud-builders/docker'
-    args: ['tag', '${_REPO}/${_IMAGE}:${_VERSION}', '${_REPO}/${_IMAGE}:latest']
+    name: "gcr.io/cloud-builders/docker"
+    args: ["tag", "${_REPO}/${_IMAGE}:${_VERSION}", "${_REPO}/${_IMAGE}:latest"]
 
   - id: "Push to AR"
     name: "gcr.io/cloud-builders/docker"
@@ -20,14 +28,21 @@ steps:
 
   - id: "Set image in deployment"
     waitFor:
-    - "Push to AR"
+      - "Push to AR"
     # - "Apply k8s manifest"
-    name: 'gcr.io/cloud-builders/kubectl'
-    args: ['set', 'image', 'deployment/${_RELEASE}', '${_CONTAINER}=${_REPO}/${_IMAGE}:${_VERSION}', '--namespace', '${_NAMESPACE}']
+    name: "gcr.io/cloud-builders/kubectl"
+    args:
+      [
+        "set",
+        "image",
+        "deployment/${_RELEASE}",
+        "${_CONTAINER}=${_REPO}/${_IMAGE}:${_VERSION}",
+        "--namespace",
+        "${_NAMESPACE}",
+      ]
     env:
-    - 'CLOUDSDK_COMPUTE_REGION=${_REGION}'
-    - 'CLOUDSDK_CONTAINER_CLUSTER=${_CLUSTER}'
-
+      - "CLOUDSDK_COMPUTE_REGION=${_REGION}"
+      - "CLOUDSDK_CONTAINER_CLUSTER=${_CLUSTER}"
 
 substitutions:
   _REPO: "us-west1-docker.pkg.dev/mslarkin-ext/mslarkin-docker"
@@ -44,4 +59,3 @@ options:
   dynamicSubstitutions: true
   substitutionOption: "ALLOW_LOOSE"
   logging: CLOUD_LOGGING_ONLY
-  # logging: GCS_ONLY
