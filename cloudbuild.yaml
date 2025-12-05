@@ -43,5 +43,5 @@ substitutions:
 options:
   dynamicSubstitutions: true
   substitutionOption: "ALLOW_LOOSE"
-  # logging: CLOUD_LOGGING_ONLY
+  logging: CLOUD_LOGGING_ONLY
   # logging: GCS_ONLY
