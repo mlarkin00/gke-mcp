@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"strings"
 	"text/template"
 	"time"
@@ -126,10 +127,15 @@ func (t *queryLogsTool) queryGCPLogs(ctx context.Context, req *LogQueryRequest) 
 	if err != nil {
 		return "", fmt.Errorf("failed to create logging client: %v", err)
 	}
-	defer client.Close()
+	defer func() {
+		if err := client.Close(); err != nil {
+			log.Printf("Failed to close logging client: %v\n", err)
+		}
+	}()
 
 	listLogsReq := buildListLogEntriesRequest(req)
 	// Request one more than the limit to check for truncation.
+	// #nosec G115
 	listLogsReq.PageSize = int32(req.Limit + 1)
 
 	resp := client.ListLogEntries(ctx, listLogsReq)
@@ -214,8 +220,9 @@ func buildListLogEntriesRequest(req *LogQueryRequest) *loggingpb.ListLogEntriesR
 	return &loggingpb.ListLogEntriesRequest{
 		ResourceNames: []string{fmt.Sprintf("projects/%s", req.ProjectID)},
 		Filter:        filter,
-		PageSize:      int32(req.Limit),
-		OrderBy:       "timestamp asc",
+		// #nosec G115
+		PageSize: int32(req.Limit),
+		OrderBy:  "timestamp asc",
 	}
 }
 

@@ -23,6 +23,7 @@ import (
 	"os"
 	"runtime/debug"
 	"strings"
+	"time"
 
 	container "cloud.google.com/go/container/apiv1"
 	"cloud.google.com/go/container/apiv1/containerpb"
@@ -173,7 +174,7 @@ func startMCPServer(ctx context.Context, opts startOptions) {
 	s.AddResource(resource, func(_ context.Context, _ *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
 		return &mcp.ReadResourceResult{
 			Contents: []*mcp.ResourceContents{
-				&mcp.ResourceContents{
+				{
 					URI:      geminiInstructionsURI,
 					MIMEType: "text/markdown",
 					Text:     string(install.GeminiMarkdown),
@@ -212,7 +213,15 @@ func startMCPServer(ctx context.Context, opts startOptions) {
 
 		addr := fmt.Sprintf("%s:%d", opts.serverHost, opts.serverPort)
 		log.Printf("Listening for HTTP connections on port: %s", addr)
-		err = http.ListenAndServe(addr, corsHandler)
+		server := &http.Server{
+			Addr:              addr,
+			Handler:           corsHandler,
+			ReadHeaderTimeout: 5 * time.Second,
+			ReadTimeout:       5 * time.Second,
+			WriteTimeout:      10 * time.Second,
+			IdleTimeout:       120 * time.Second,
+		}
+		err = server.ListenAndServe()
 	default:
 		log.Printf("Unknown mode '%s', defaulting to 'stdio'", opts.serverMode)
 		tr := &mcp.LoggingTransport{Transport: &mcp.StdioTransport{}, Writer: log.Writer()}
@@ -244,7 +253,11 @@ func adcAuthCheck(ctx context.Context, c *config.Config) error {
 	if err != nil {
 		return fmt.Errorf("failed to create cluster manager client: %w", err)
 	}
-	defer cmClient.Close()
+	defer func() {
+		if err := cmClient.Close(); err != nil {
+			log.Printf("Failed to close cluster manager client: %v\n", err)
+		}
+	}()
 
 	_, err = cmClient.GetServerConfig(ctx, &containerpb.GetServerConfigRequest{
 		Name: fmt.Sprintf("projects/%s/locations/%s", projectID, location),
