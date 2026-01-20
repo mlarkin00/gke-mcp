@@ -35,7 +35,7 @@ jobs:
         with:
           target_sync_branch: main
           # REQUIRED 'target_repo_token' exactly like this!
-          target_repo_token: ${{ secrets.GITHUB_TOKEN }}
+          target_repo_token: ${{ secrets.GKE_MCP_SYNC_TOKEN }}
           upstream_sync_branch: main
           upstream_sync_repo: GoogleCloudPlatform/gke-mcp
 
