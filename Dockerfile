@@ -34,4 +34,4 @@ COPY --from=builder /app/gke-mcp .
 EXPOSE 8080
 
 # Command to run the executable
-CMD ["./gke-mcp", "--server-mode", "http", "--server-host", "0.0.0.0", "--server-port", "8080"]
+CMD ["./gke-mcp", "--server-mode", "http", "--server-host", "0.0.0.0", "--server-port", "8080", "--allowed-origins", "*"]
