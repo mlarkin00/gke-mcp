@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package giq provides tools for GKE Inference Quickstart workflows.
 package giq
 
 import (
@@ -25,12 +26,13 @@ import (
 )
 
 type giqGenerateManifestArgs struct {
-	Model                   string `json:"model" jsonschema:"The model to use. Get the list of valid models from 'gcloud container ai profiles model-and-server-combinations list' if the user doesn't provide it."`
-	ModelServer             string `json:"model_server" jsonschema:"The model server to use. Get the list of valid models from 'gcloud container ai profiles model-and-server-combinations list' if the user doesn't provide it."`
-	Accelerator             string `json:"accelerator" jsonschema:"The accelerator to use. Get the list of valid accelerators from 'gcloud container ai profiles list --model=<model>' if the user doesn't provide it."`
+	Model                   string `json:"model" jsonschema:"The model to use. Get the list of valid models from 'gcloud container ai profiles models list' if the user doesn't provide it."`
+	ModelServer             string `json:"model_server" jsonschema:"The model server to use. Get the list of valid model servers from 'gcloud container ai profiles list --format='table(modelServerInfo.model,modelServerInfo.modelServer,modelServerInfo.modelServerVersion,acceleratorType)' if the user doesn't provide it. You can filter that gcloud command on '--model={model}' if the user provides the model."`
+	Accelerator             string `json:"accelerator" jsonschema:"The accelerator to use. Get the list of valid accelerators from 'gcloud container ai profiles list --format='table(modelServerInfo.model,modelServerInfo.modelServer,modelServerInfo.modelServerVersion,acceleratorType)' if the user doesn't provide it. You can filter that gcloud command on '--model={model}' and '--model-server={model-server}' if the user provides those values."`
 	TargetNTPOTMilliseconds string `json:"target_ntpot_milliseconds,omitempty" jsonschema:"The maximum normalized time per output token (NTPOT) in milliseconds.NTPOT is measured as the request_latency / output_tokens."`
 }
 
+// Install registers GIQ tools with the MCP server.
 func Install(_ context.Context, s *mcp.Server, _ *config.Config) error {
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "giq_generate_manifest",
@@ -44,7 +46,7 @@ func Install(_ context.Context, s *mcp.Server, _ *config.Config) error {
 	return nil
 }
 
-func giqGenerateManifest(ctx context.Context, req *mcp.CallToolRequest, args *giqGenerateManifestArgs) (*mcp.CallToolResult, any, error) {
+func giqGenerateManifest(_ context.Context, _ *mcp.CallToolRequest, args *giqGenerateManifestArgs) (*mcp.CallToolResult, any, error) {
 	if args.Model == "" {
 		return nil, nil, fmt.Errorf("model argument cannot be empty")
 	}
